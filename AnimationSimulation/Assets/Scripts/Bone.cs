@@ -7,6 +7,8 @@ public class Bone
     public readonly Joint joint1; 
     public readonly Joint joint2;
     public readonly float distance;
+    public Vector3 directionForAngle;
+
     public Bone(Joint joint1, Joint joint2)
     {
         this.joint1 = joint1;

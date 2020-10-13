@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -89,6 +90,11 @@ public class LineCreation : MonoBehaviour
         for (int i = 1; i < listJoint.Count; i++)
         {
             listJoint[i].position = listJoint[i - 1].position + listBone[i - 1].distance * Vector3.Normalize(listJoint[i].position - listJoint[i-1].position);
+
+            listBone[i - 1].directionForAngle = listJoint[i].position - listJoint[i-1].position;
+            
+            Debug.DrawLine(listJoint[i].position, listJoint[i].position + listBone[i - 1].directionForAngle.normalized * 2);
+            //listJoint[i].position = GetAngledPosition(listBone[i - 1]);
         }
 
         if (direction == FrabrikDirection.backward)
@@ -100,11 +106,57 @@ public class LineCreation : MonoBehaviour
         return listJoint;
     }
 
+    public static Vector3 GetAngledPosition(Bone bone)
+    {
+        Vector3 pointInLocal = bone.joint2.position - bone.joint1.position;
+        Vector3 polarCoordinateAlpha = CartesianToPolar(pointInLocal.x, pointInLocal.y);
+        float angleAlpha = polarCoordinateAlpha.x;
+        float radius = polarCoordinateAlpha.y;
+
+        Debug.DrawLine(bone.joint1.position, PolarToCartesian(bone.joint1.angleMax, radius) + bone.directionForAngle.normalized * 2);
+        Debug.DrawLine(bone.joint1.position, PolarToCartesian(bone.joint1.angleMin, radius) + bone.directionForAngle.normalized * 2);
+
+
+        if (angleAlpha > bone.joint1.angleMax || angleAlpha < bone.joint1.angleMin)
+        {
+            Vector3 pointMax = PolarToCartesian(bone.joint1.angleMax, radius);
+            Vector3 pointMin = PolarToCartesian(bone.joint1.angleMin, radius);
+
+            float distanceAlphaMax = (pointMax - pointInLocal).magnitude;
+            float distanceAlphaMin = (pointMin - pointInLocal).magnitude; ;
+
+            if (distanceAlphaMin < distanceAlphaMax)
+            {
+                pointInLocal = pointMin;
+            }
+            else
+            {
+                pointInLocal = pointMax;
+            }
+        }
+
+        return pointInLocal + bone.joint1.position;
+    }
+
     public enum FrabrikDirection{
         forward,
         backward
     }
 
+    public static Vector3 CartesianToPolar(float x, float y)
+    {
+        double radius = Math.Sqrt((x * x) + (y * y));
+        double angle = Math.Atan2(y, x);
 
+        return new Vector3((float)angle * 180 / (float)Math.PI , (float)radius);
+    }
+
+    public static Vector3 PolarToCartesian(double angle, double radius)
+    {
+        double angleRad = (Math.PI / 180.0) * (angle);
+        double x = radius * Math.Cos(angleRad);
+        double y = radius * Math.Sin(angleRad);
+        return new Vector3((float)x, (float)y);
+    }
 
 }
